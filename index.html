@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#8B0000">
+  <meta name="description" content="Aplicación para gestionar pedidos, entregas y pagos del restaurante El Rancho">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EL RANCHO">
+  
+  <title>El Rancho</title>
+  
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%238B0000' width='192' height='192'/><text x='50%' y='50%' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle' font-family='Arial'>ER</text></svg>">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%238B0000' width='192' height='192' rx='45'/><text x='50%' y='50%' font-size='80' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle' font-family='Arial'>ER</text></svg>">
+
+  <style>
+:root { --rojo-oscuro: #8B0000; --negro: #1a1a1a; --gris-claro: #f4f4f4; }
+* { box-sizing: border-box; }
+html, body { width: 100%; height: 100%; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; margin: 0; background-color: var(--gris-claro); overflow-x: hidden; }
+header { background: var(--rojo-oscuro); color: white; padding: 15px; text-align: center; position: sticky; top: 0; z-index: 1000; }
+.container { padding: 10px; max-width: 600px; margin: auto; }
+.screen { display: none; }
+.active { display: block; }
+
+.btn { display: block; width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 16px; }
+.btn-main { background: var(--rojo-oscuro); color: white; }
+.btn-sec { background: var(--negro); color: white; }
+.btn-add { background: #27ae60; color: white; }
+
+.card { background: white; padding: 12px; border-radius: 10px; margin-bottom: 12px; border-left: 5px solid var(--rojo-oscuro); box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: relative; }
+.btn-del { position: absolute; top: 5px; right: 5px; background: #e74c3c; color: white; border: none; border-radius: 50%; width: 22px; height: 22px; }
+
+input, select { width: 100%; padding: 8px; margin: 4px 0 8px 0; border: 1px solid #ddd; border-radius: 5px; font-size: 14px; }
+.flex { display: flex; gap: 5px; }
+.flex div { flex: 1; }
+
+.qty-selector { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 5px; }
+.qty-btn { flex: 1; min-width: 25px; padding: 6px 2px; border: 1px solid #ddd; background: white; border-radius: 4px; font-size: 11px; cursor: pointer; }
+.qty-btn.active { background: var(--rojo-oscuro); color: white; border-color: var(--rojo-oscuro); }
+
+.table-container { overflow-x: auto; background: white; border-radius: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
+th { background: #333; color: white; padding: 8px 2px; }
+td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
+
+/* LINEA NEGRA GRUESA DE SEPARACION */
+.linea-separacion { background-color: #000 !important; color: #fff !important; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
+
+.fila-entregada { background-color: #ffe5b4 !important; } 
+.fila-pagada { background-color: #c8e6c9 !important; }    
+.fila-taper-ok { background-color: #003366 !important; color: white !important; }
+.fila-taper-ok td { color: white !important; }
+.fila-taper-incompleto { background-color: #87CEEB !important; }
+
+.status-pill { padding: 2px 5px; border-radius: 10px; color: white; font-size: 9px; }
+.bg-verde { background: #27ae60; } .bg-naranja { background: #f39c12; }
+.resumen-box { background: var(--negro); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+.highlight { color: #ff4d4d; font-size: 1.4rem; font-weight: bold; }
+
+.offline-banner { background: #ff6b6b; color: white; padding: 10px; text-align: center; font-weight: bold; display: none; position: sticky; top: 0; z-index: 999; }
+.offline-banner.show { display: block; }
+
+  </style>
+
+</head>
+<body>
+<div class="offline-banner" id="offline-banner">📡 Sin conexión - Los cambios se sincronizarán cuando vuelva la conexión</div>
+
+<header>
+    <h1 style="margin:0; letter-spacing: 2px;">EL RANCHO</h1>
+</header>
+
+<div class="container">
+    <div id="scr-home" class="screen active">
+        <button class="btn btn-main" onclick="nav('scr-config')">➕ Nueva Lista de Pedidos</button>
+        <button class="btn btn-sec" onclick="alert('Historial en desarrollo')">📋 Ver Historial</button>
+    </div>
+
+    <div id="scr-config" class="screen">
+        <div class="card">
+            <h3>Configuración del Día</h3>
+            <label>Fecha</label><input type="date" id="conf-fecha">
+            <label>Sopa</label><input type="text" id="conf-sopa">
+            <label>Nombre del Segundo 1</label><input type="text" id="conf-s1">
+            <div id="wrapper-s2"><label>Nombre del Segundo 2</label><input type="text" id="conf-s2"></div>
+            <label>Tipo de Almuerzo</label>
+            <select id="conf-tipo" onchange="manejarTipoAlmuerzo(this.value)">
+                <option value="15">Almuerzo Normal (15 Bs)</option>
+                <option value="17">Especial (17 Bs)</option>
+                <option value="OTRO">OTRO (Configurar precio)</option>
+            </select>
+            <div id="div-precio-manual" style="display:none;"><label>Precio (Bs)</label><input type="number" id="conf-precio-manual" value="15"></div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-sec" style="flex: 1;" onclick="nav('scr-home')">Cancelar</button>
+                <button class="btn btn-main" style="flex: 2;" onclick="iniciarPedidos()">▶️ Siguiente</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="scr-pedidos" class="screen">
+        <div id="header-pedidos" style="position: sticky; top: 0; background: #f4f4f4; padding: 10px 0; z-index: 100;">
+            <div style="display: flex; justify-content: space-between; gap: 5px;">
+                <button class="btn btn-sec" style="width: 30%;" onclick="nav('scr-config')">◀️ Menú</button>
+                <button class="btn btn-add" style="width: 68%;" onclick="agregarCliente()">➕ Cliente</button>
+            </div>
+            <button class="btn btn-main" style="margin: 5px 0;" onclick="nav('scr-resumen-tabla')">📋 Ver Resumen General</button>
+        </div>
+        <div id="lista-clientes"></div>
+    </div>
+
+    <div id="scr-resumen-tabla" class="screen">
+        <h3 style="text-align: center;">RESUMEN GENERAL</h3>
+        <div class="table-container">
+            <table>
+                <thead><tr id="header-row-resumen"></tr></thead>
+                <tbody id="body-tabla"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-add" style="margin-top: 15px; background-color: #f39c12;" onclick="nav('scr-entrega')">🚚 ENTREGAR</button>
+        <button class="btn btn-add" style="background-color: #003366;" onclick="nav('scr-tapers')">🥡 TÁPERS</button>
+        <div style="display: flex; gap: 10px;">
+            <button class="btn btn-sec" onclick="nav('scr-pedidos')">◀️ Atrás</button>
+            <button class="btn btn-main" onclick="mostrarCierreFinal()">✅ FINALIZAR</button>
+        </div>
+    </div>
+
+    <div id="scr-entrega" class="screen">
+        <h3 style="text-align: center;">CONTROL DE ENTREGA</h3>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>Sec.</th><th>Cliente</th><th>Ped.</th><th>Estado</th><th>Pago</th></tr></thead>
+                <tbody id="body-entrega"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-sec" style="margin-top: 20px;" onclick="nav('scr-resumen-tabla')">◀️ Volver</button>
+    </div>
+
+    <div id="scr-tapers" class="screen">
+        <h3 style="text-align: center;">CONTROL DE TÁPERS</h3>
+        <div class="table-container">
+            <table>
+                <thead><tr><th style="width: 15%;">Sec.</th><th>Cliente</th><th style="width: 15%;">Cant.</th><th>Estado</th><th>Nota</th></tr></thead>
+                <tbody id="body-tapers"></tbody>
+            </table>
+        </div>
+        <button class="btn btn-sec" style="margin-top: 20px;" onclick="nav('scr-resumen-tabla')">◀️ Volver</button>
+    </div>
+
+    <div id="scr-final" class="screen">
+        <div class="resumen-box">
+            <h2 style="border-bottom: 2px solid #8B0000; padding-bottom: 10px;">REPORTE FINAL</h2>
+            <div id="res-s1" class="resumen-item" style="font-size: 1.2rem; margin: 10px 0;"></div>
+            <div id="res-s2" class="resumen-item" style="font-size: 1.2rem; margin: 10px 0;"></div>
+            <hr style="border-color: #444;">
+            <div class="resumen-item">Total platos: <span class="highlight" id="res-total-platos">0</span></div>
+            <div class="resumen-item">Total dinero: <span class="highlight" id="res-total-dinero">0</span> Bs</div>
+            <div id="lista-deben-taper" style="margin-top:15px; font-size: 11px; color:#aaa; font-style: italic;"></div>
+        </div>
+        
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn btn-sec" style="flex: 1;" onclick="nav('scr-resumen-tabla')">◀️ Corregir</button>
+            <button class="btn btn-main" style="flex: 2;" onclick="guardarYSalir()">💾 Guardar y Salir</button>
+        </div>
+    </div>
+
+
+
+  <script>
+// --- REGISTRO DEL SERVICE WORKER ---
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js')
+      .then((registration) => {
+        console.log('Service Worker registrado:', registration);
+      })
+      .catch((error) => {
+        console.log('Error al registrar Service Worker:', error);
+      });
+  });
+}
+
+// --- DETECTAR CONEXIÓN ---
+window.addEventListener('online', () => {
+  document.getElementById('offline-banner').classList.remove('show');
+  console.log('Conexión restaurada');
+});
+
+window.addEventListener('offline', () => {
+  document.getElementById('offline-banner').classList.add('show');
+  console.log('Sin conexión');
+});
+
+// Verificar estado inicial
+if (!navigator.onLine) {
+  document.getElementById('offline-banner').classList.add('show');
+}
+
+// --- ESTADO INICIAL DE LA APP ---
+let appData = {
+    config: { fecha: '', sopa: '', s1: '', s2: '', precio: 15, soloUno: false },
+    clientes: [],
+    // Lista inicial de zonas
+    zonas: ["PIL", "Puente", "Choclos", "Sandía", "Frutas", "Bananas", "Camiones", "Coca", "Abarrotes"],
+    inicioDespacho: false 
+};
+
+// --- NAVEGACIÓN Y PERSISTENCIA ---
+function nav(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const target = document.getElementById(screenId);
+    if (target) target.classList.add('active');
+
+    if (screenId === 'scr-pedidos') renderClientes();
+    if (screenId === 'scr-resumen-tabla') renderTabla();
+    if (screenId === 'scr-entrega') renderEntrega();
+    if (screenId === 'scr-tapers') renderTapers();
+    window.scrollTo(0, 0);
+}
+
+function guardarAuto() {
+    localStorage.setItem('rancho_vFinal_Zonas', JSON.stringify(appData));
+}
+
+// --- GESTIÓN DE ZONAS DINÁMICAS ---
+function manejarCambioZona(index, valorSeleccionado) {
+    if (valorSeleccionado === "NUEVA_ZONA") {
+        const nombreNuevaZona = prompt("Escriba el nombre de la nueva zona:");
+        if (nombreNuevaZona && nombreNuevaZona.trim() !== "") {
+            const zonaLimpia = nombreNuevaZona.trim();
+            // Evitar duplicados
+            if (!appData.zonas.includes(zonaLimpia)) {
+                appData.zonas.push(zonaLimpia);
+                appData.zonas.sort(); // Ordenar alfabéticamente
+            }
+            appData.clientes[index].seccion = zonaLimpia;
+        } else {
+            appData.clientes[index].seccion = ""; // Reset si cancela
+        }
+        guardarAuto();
+        renderClientes(); // Recargar para que la nueva zona aparezca en todos los selects
+    } else {
+        actualizarDato(index, 'seccion', valorSeleccionado);
+    }
+}
+
+// --- CONFIGURACIÓN DEL DÍA ---
+function manejarTipoAlmuerzo(val) {
+    document.getElementById('wrapper-s2').style.display = (val === '17') ? 'none' : 'block';
+    document.getElementById('div-precio-manual').style.display = (val === 'OTRO') ? 'block' : 'none';
+}
+
+function iniciarPedidos() {
+    const confTipo = document.getElementById('conf-tipo').value;
+    let precioFinal = (confTipo === 'OTRO') ? Number(document.getElementById('conf-precio-manual').value) : Number(confTipo);
+
+    appData.config = {
+        fecha: document.getElementById('conf-fecha').value,
+        sopa: document.getElementById('conf-sopa').value,
+        s1: document.getElementById('conf-s1').value || "S1",
+        s2: document.getElementById('conf-s2').value || "S2",
+        precio: precioFinal,
+        soloUno: (confTipo === '17')
+    };
+
+    if (appData.clientes.length === 0) agregarCliente();
+    guardarAuto();
+    nav('scr-pedidos');
+}
+
+// --- REGISTRO DE CLIENTES ---
+function agregarCliente() {
+    const nuevo = {
+        id: "id-" + Date.now(), nombre: '', seccion: '', cant1: 0, cant2: 0,
+        entregado: false, taperEstado: 0, pago: 0, notaTaper: '',
+        esReciente: appData.inicioDespacho 
+    };
+    appData.clientes.unshift(nuevo);
+    renderClientes();
+    guardarAuto();
+}
+
+function renderClientes() {
+    const contenedor = document.getElementById('lista-clientes');
+    if (!contenedor) return;
+    contenedor.innerHTML = '';
+    
+    appData.clientes.forEach((c, index) => {
+        // Generar opciones de zona + opción de añadir nueva
+        let opcionesZonas = appData.zonas.map(z => `<option value="${z}" ${c.seccion === z ? 'selected' : ''}>${z}</option>`).join('');
+        
+        let botones1 = '', botones2 = '';
+        for (let n = 0; n <= 10; n++) {
+            botones1 += `<button class="qty-btn ${c.cant1 === n ? 'active' : ''}" onclick="setCant('${c.id}', 1, ${n})">${n}</button>`;
+            if (!appData.config.soloUno) {
+                botones2 += `<button class="qty-btn ${c.cant2 === n ? 'active' : ''}" onclick="setCant('${c.id}', 2, ${n})">${n}</button>`;
+            }
+        }
+
+        contenedor.innerHTML += `
+            <div class="card" id="${c.id}">
+                <button class="btn-del" onclick="eliminarCliente('${c.id}')">X</button>
+                <div class="flex">
+                    <div>
+                        <select onchange="manejarCambioZona(${index}, this.value)">
+                            <option value="">Zona...</option>
+                            ${opcionesZonas}
+                            <option value="NUEVA_ZONA" style="color: blue; font-weight: bold;">➕ Añadir nueva zona...</option>
+                        </select>
+                    </div>
+                    <div><input type="text" placeholder="Nombre" value="${c.nombre}" oninput="actualizarDato(${index}, 'nombre', this.value)"></div>
+                </div>
+                <div style="margin-top:8px;">
+                    <label style="font-size:11px; font-weight:bold;">${appData.config.s1}:</label>
+                    <div class="qty-selector">${botones1}</div>
+                    ${!appData.config.soloUno ? `
+                        <label style="font-size:11px; font-weight:bold; margin-top:5px; display:block;">${appData.config.s2}:</label>
+                        <div class="qty-selector">${botones2}</div>
+                    ` : ''}
+                </div>
+                <div class="flex" style="margin-top:10px; align-items:center;">
+                    <span style="font-size:12px;">Pago Bs:</span>
+                    <input type="number" style="width:80px; margin:0;" value="${c.pago}" oninput="actualizarDato(${index}, 'pago', this.value)">
+                </div>
+            </div>`;
+    });
+}
+
+function setCant(id, plato, num) {
+    const i = appData.clientes.findIndex(c => c.id === id);
+    if (plato === 1) appData.clientes[i].cant1 = num;
+    else appData.clientes[i].cant2 = num;
+    guardarAuto();
+    renderClientes();
+}
+
+// --- TABLAS CON LÍNEA NEGRA ---
+function renderTabla() {
+    const headerRow = document.getElementById('header-row-resumen');
+    const s1Ini = (appData.config.s1 || "S1").charAt(0).toUpperCase();
+    const s2Ini = (appData.config.s2 || "S2").charAt(0).toUpperCase();
+    const numCols = appData.config.soloUno ? 6 : 7;
+
+    headerRow.innerHTML = `<th>Sec.</th><th>Cliente</th><th>Est.</th><th>${s1Ini}</th>${!appData.config.soloUno ? `<th>${s2Ini}</th>` : ''}<th>Pago</th><th>Tp</th>`;
+
+    const body = document.getElementById('body-tabla');
+    body.innerHTML = '';
+    
+    let normales = appData.clientes.filter(c => !c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
+    let recientes = appData.clientes.filter(c => c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
+
+    const fRes = (c) => {
+        let ico = c.taperEstado === 1 ? '🆗' : (c.taperEstado === 2 ? '❌' : '⚠️');
+        return `<tr onclick="irACliente('${c.id}')">
+            <td>${c.seccion}</td><td>${c.nombre}</td>
+            <td><span class="status-pill ${c.entregado ? 'bg-verde':'bg-naranja'}">${c.entregado ? 'SÍ':'NO'}</span></td>
+            <td>${c.cant1}</td>${!appData.config.soloUno ? `<td>${c.cant2}</td>` : ''}
+            <td>${c.pago} Bs</td><td>${ico}</td>
+        </tr>`;
+    };
+
+    normales.forEach(c => body.innerHTML += fRes(c));
+    if (recientes.length > 0) {
+        body.innerHTML += `<tr><td colspan="${numCols}" class="linea-separacion" style="background:#000; color:#fff; text-align:center; font-weight:bold;">PEDIDOS RECIENTES</td></tr>`;
+        recientes.forEach(c => body.innerHTML += fRes(c));
+    }
+}
+
+function renderEntrega() {
+    const body = document.getElementById('body-entrega');
+    body.innerHTML = '';
+    let normales = appData.clientes.filter(c => !c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
+    let recientes = appData.clientes.filter(c => c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
+
+    const fEnt = (c) => {
+        const deuda = (Number(c.cant1) + Number(c.cant2)) * appData.config.precio;
+        let clase = (c.pago >= deuda && deuda > 0) ? "fila-pagada" : (c.entregado ? "fila-entregada" : "");
+        let ped = appData.config.soloUno ? c.cant1 : `${c.cant1}/${c.cant2}`;
+        return `<tr class="${clase}">
+            <td>${c.seccion}</td><td>${c.nombre}</td><td>${ped}</td>
+            <td onclick="toggleEntrega('${c.id}')" style="cursor:pointer; font-weight:bold;">${c.entregado ? '✅':'⭕'}</td>
+            <td onclick="togglePago('${c.id}', ${deuda})" style="cursor:pointer;">${c.pago || deuda} Bs</td>
+        </tr>`;
+    };
+
+    normales.forEach(c => body.innerHTML += fEnt(c));
+    if (recientes.length > 0) {
+        body.innerHTML += `<tr><td colspan="5" class="linea-separacion" style="background:#000; color:#fff; text-align:center; font-weight:bold;">PEDIDOS RECIENTES</td></tr>`;
+        recientes.forEach(c => body.innerHTML += fEnt(c));
+    }
+}
+
+// --- TÁPERS ---
+function renderTapers() {
+    const body = document.getElementById('body-tapers');
+    body.innerHTML = '';
+    appData.clientes.forEach(c => {
+        if(!c.nombre) return;
+        const total = Number(c.cant1) + Number(c.cant2);
+        let clase = c.taperEstado === 1 ? "fila-taper-ok" : (c.taperEstado === 2 ? "fila-taper-incompleto" : "");
+        let texto = c.taperEstado === 1 ? "✅ REC." : (c.taperEstado === 2 ? "❌ INC." : "⚠️ PEND.");
+        body.innerHTML += `<tr class="${clase}">
+            <td>${c.seccion}</td><td>${c.nombre}</td><td>${total}</td>
+            <td onclick="toggleTaperEstado('${c.id}')" style="cursor:pointer; font-weight:bold;">${texto}</td>
+            <td><input type="text" style="width:90%;" value="${c.notaTaper || ''}" oninput="updateNota('${c.id}', this.value)"></td>
+        </tr>`;
+    });
+}
+
+// --- AUXILIARES ---
+function toggleEntrega(id) {
+    const i = appData.clientes.findIndex(c => c.id === id);
+    appData.clientes[i].entregado = !appData.clientes[i].entregado;
+    appData.inicioDespacho = true;
+    guardarAuto(); renderEntrega();
+}
+
+function togglePago(id, monto) {
+    const i = appData.clientes.findIndex(c => c.id === id);
+    appData.clientes[i].pago = (appData.clientes[i].pago === monto) ? 0 : monto;
+    guardarAuto(); renderEntrega();
+}
+
+function toggleTaperEstado(id) {
+    const i = appData.clientes.findIndex(c => c.id === id);
+    appData.clientes[i].taperEstado = (appData.clientes[i].taperEstado + 1) % 3;
+    guardarAuto(); renderTapers();
+}
+
+function updateNota(id, val) {
+    const i = appData.clientes.findIndex(c => c.id === id);
+    appData.clientes[i].notaTaper = val;
+    guardarAuto();
+}
+
+function actualizarDato(index, campo, valor) {
+    if (campo === 'pago') valor = Number(valor);
+    appData.clientes[index][campo] = valor;
+    guardarAuto();
+}
+
+function eliminarCliente(id) {
+    if (confirm("¿Eliminar?")) {
+        appData.clientes = appData.clientes.filter(c => c.id !== id);
+        renderClientes(); guardarAuto();
+    }
+}
+
+function irACliente(id) {
+    nav('scr-pedidos');
+    setTimeout(() => { document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' }); }, 150);
+}
+
+// --- CIERRE FINAL ---
+function mostrarCierreFinal() {
+    let t1 = 0, t2 = 0, tD = 0, faltanT = [];
+    appData.clientes.forEach(c => {
+        t1 += Number(c.cant1); t2 += Number(c.cant2); tD += Number(c.pago);
+        if (c.nombre && c.taperEstado !== 1) faltanT.push(c.nombre);
+    });
+    document.getElementById('res-s1').innerHTML = `${appData.config.s1}: <b>${t1}</b>`;
+    const r2 = document.getElementById('res-s2');
+    r2.style.display = appData.config.soloUno ? 'none' : 'block';
+    r2.innerHTML = `${appData.config.s2}: <b>${t2}</b>`;
+    document.getElementById('res-total-platos').innerText = t1 + t2;
+    document.getElementById('res-total-dinero').innerText = tD;
+    document.getElementById('lista-deben-taper').innerText = "Pendientes táper: " + (faltanT.join(", ") || "Ninguno");
+    nav('scr-final');
+}
+
+function guardarYSalir() {
+    if (confirm("¿Finalizar el día?")) {
+        localStorage.removeItem('rancho_vFinal_Zonas');
+        location.reload();
+    }
+}
+
+// --- CARGA ---
+window.onload = function() {
+    const data = localStorage.getItem('rancho_vFinal_Zonas');
+    if (data) {
+        appData = JSON.parse(data);
+        if (appData.clientes.length > 0) nav('scr-pedidos');
+    }
+    document.getElementById('conf-fecha').valueAsDate = new Date();
+};
+
+  </script>
+
+</body>
+</html>
