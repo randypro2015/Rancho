@@ -1,4 +1,4 @@
-const CACHE_NAME = 'el-rancho-v1';
+const CACHE_NAME = 'el-rancho-redisenado-v3';
 const urlsToCache = [
   './',
   './index.html',
