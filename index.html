@@ -45,6 +45,18 @@ input, select { width: 100%; padding: 8px; margin: 4px 0 8px 0; border: 1px soli
 table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; }
 th { background: #333; color: white; padding: 8px 2px; }
 td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
+#scr-entrega .table-container { overflow: visible; }
+#scr-entrega table { table-layout: auto; font-size: 14px; }
+#scr-entrega th, #scr-entrega td { padding: 11px 7px; }
+#scr-entrega td.pedido-clickeable { cursor:pointer; text-align:left; font-size:14px; line-height:1.4; font-weight:600; color:#003366; }
+#modal-detalle-pedido { display:none; position:fixed; inset:0; background:rgba(0,0,0,.76); z-index:3500; padding:16px; align-items:center; justify-content:center; }
+#modal-detalle-pedido > div { background:#fff; color:#1a1a1a; width:100%; max-width:440px; border-radius:16px; padding:22px; max-height:88vh; overflow:auto; box-shadow:0 8px 30px rgba(0,0,0,.35); }
+.detalle-pedido-linea { display:flex; justify-content:space-between; gap:12px; padding:12px 0; border-bottom:1px solid #eee; font-size:18px; }
+.detalle-pedido-linea:last-child { border-bottom:0; }
+.detalle-pedido-cantidad { color:#8B0000; font-weight:800; white-space:nowrap; }
+#scr-reportes .card { border-left-color:#003366; }
+.reporte-historico { font-size:15px; line-height:1.5; }
+@media (max-width:600px) { #scr-entrega table { min-width:620px; } #scr-entrega .table-container { overflow-x:auto; } #scr-entrega td.pedido-clickeable { min-width:250px; } .detalle-pedido-linea { font-size:17px; } }
 
 /* LINEA NEGRA GRUESA DE SEPARACION */
 .linea-separacion { background-color: #000 !important; color: #fff !important; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
@@ -58,10 +70,41 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
 .status-pill { padding: 2px 5px; border-radius: 10px; color: white; font-size: 9px; }
 .bg-verde { background: #27ae60; } .bg-naranja { background: #f39c12; }
 .resumen-box { background: var(--negro); color: white; padding: 20px; border-radius: 15px; text-align: center; }
+.reporte-comidas { display:flex; flex-direction:column; align-items:center; gap:12px; margin:18px auto; text-align:center; }
+.reporte-comida { width:100%; max-width:300px; padding:10px 14px; border-bottom:1px solid #444; }
+.reporte-comida:last-child { border-bottom:0; }
+.reporte-comida b { display:block; font-size:1.05rem; }
+.reporte-comida .cantidad { display:block; margin-top:3px; }
+.reporte-totales { display:flex; flex-direction:column; align-items:center; gap:7px; margin-top:14px; }
 .highlight { color: #ff4d4d; font-size: 1.4rem; font-weight: bold; }
+.menu-summary { background:#fff7ed; border:1px solid #f0c9aa; border-radius:10px; padding:10px; margin-bottom:12px; }
+.order-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.order-box { background:#fff; border:1px solid #e5e5e5; border-radius:8px; padding:8px; }
+.order-box h4 { margin:0 0 5px; font-size:12px; }
+.order-box.complete { border-top:4px solid #8B0000; }
+.order-box.loose { border-top:4px solid #003366; }
+.order-box.extra { border-top-color:#f39c12; }
+.order-box select { margin:3px 0; }
+  .pedido-row { background:#fff; border:1px solid #ddd; border-radius:8px; padding:8px; margin:8px 0; }
+  .pedido-row.complete { border-left:4px solid #8B0000; }
+  .pedido-row.loose { border-left:4px solid #003366; }
+  .pedido-row.extra { border-left:4px solid #f39c12; }
+  .pedido-options { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:6px; }
+  .pedido-options label { font-size:11px; font-weight:bold; }
+  .btn-mini { display:inline-block; width:auto; padding:7px 10px; font-size:12px; margin:3px 0; }
+.type-badge { display:inline-block; padding:2px 5px; border-radius:8px; font-size:10px; font-weight:bold; }
+.badge-complete { background:#ffe5b4; color:#6b2800; }
+.badge-loose { background:#d7efff; color:#003366; }
+.badge-extra { background:#fff0c2; color:#8a5a00; }
+@media (max-width:480px) { .order-grid { grid-template-columns:1fr 1fr; } .order-box select { font-size:12px; } }
 
 .offline-banner { background: #ff6b6b; color: white; padding: 10px; text-align: center; font-weight: bold; display: none; position: sticky; top: 0; z-index: 999; }
 .offline-banner.show { display: block; }
+
+.nota-taper-btn { width: 100%; min-height: 42px; padding: 8px 10px; border: 1px solid #8B0000; border-radius: 8px; background: #fff8f5; color: #5a1717; font-size: 14px; font-weight: 700; line-height: 1.25; cursor: pointer; }
+.nota-taper-btn:active { transform: scale(.98); }
+#modal-tapers input[type="checkbox"] { accent-color: #8B0000; }
+@media (max-width: 600px) { #modal-tapers { padding: 12px; } #modal-tapers > div { padding: 18px; } }
 
   </style>
 
@@ -76,7 +119,7 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
 <div class="container">
     <div id="scr-home" class="screen active">
         <button class="btn btn-main" onclick="nav('scr-config')">➕ Nueva Lista de Pedidos</button>
-        <button class="btn btn-sec" onclick="alert('Historial en desarrollo')">📋 Ver Historial</button>
+        <button class="btn btn-sec" onclick="mostrarReportes()">📋 Ver Reportes</button>
     </div>
 
     <div id="scr-config" class="screen">
@@ -84,15 +127,10 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
             <h3>Configuración del Día</h3>
             <label>Fecha</label><input type="date" id="conf-fecha">
             <label>Sopa</label><input type="text" id="conf-sopa">
-            <label>Nombre del Segundo 1</label><input type="text" id="conf-s1">
-            <div id="wrapper-s2"><label>Nombre del Segundo 2</label><input type="text" id="conf-s2"></div>
-            <label>Tipo de Almuerzo</label>
-            <select id="conf-tipo" onchange="manejarTipoAlmuerzo(this.value)">
-                <option value="15">Almuerzo Normal (15 Bs)</option>
-                <option value="17">Especial (17 Bs)</option>
-                <option value="OTRO">OTRO (Configurar precio)</option>
-            </select>
-            <div id="div-precio-manual" style="display:none;"><label>Precio (Bs)</label><input type="number" id="conf-precio-manual" value="15"></div>
+            <label>¿Cuántos segundos habrá?</label><select id="conf-cantidad-segundos" onchange="renderConfigSegundos()"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+            <div id="config-segundos"></div>
+            <div class="menu-summary"><b>Almuerzo extra</b><p style="font-size:12px; margin:4px 0;">Puedes agregar una opción especial con su propio precio.</p><div class="flex"><input id="conf-extra-nombre" placeholder="Nombre del extra"><input id="conf-extra-precio" type="number" placeholder="Precio Bs"></div></div>
+            <button class="btn btn-sec" style="margin-top:10px; background:#003366;" onclick="mostrarReportes()">📊 Reportes</button>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn btn-sec" style="flex: 1;" onclick="nav('scr-home')">Cancelar</button>
                 <button class="btn btn-main" style="flex: 2;" onclick="iniciarPedidos()">▶️ Siguiente</button>
@@ -129,40 +167,67 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
 
     <div id="scr-entrega" class="screen">
         <h3 style="text-align: center;">CONTROL DE ENTREGA</h3>
+        <p style="text-align:center; font-size:13px; color:#555;">Toca el pedido para ver el detalle completo.</p>
         <div class="table-container">
             <table>
-                <thead><tr><th>Sec.</th><th>Cliente</th><th>Ped.</th><th>Estado</th><th>Pago</th></tr></thead>
+                <thead><tr><th>Zona</th><th>Cliente</th><th>Pedido</th><th>Pago</th></tr></thead>
                 <tbody id="body-entrega"></tbody>
             </table>
         </div>
         <button class="btn btn-sec" style="margin-top: 20px;" onclick="nav('scr-resumen-tabla')">◀️ Volver</button>
     </div>
 
+    <div id="scr-reportes" class="screen">
+        <h3 style="text-align:center;">REPORTES GUARDADOS</h3>
+        <p style="text-align:center; font-size:13px; color:#555;">Aquí aparecen las jornadas guardadas en este celular.</p>
+        <div id="lista-reportes"></div>
+        <button class="btn btn-sec" style="margin-top:20px;" onclick="nav('scr-config')">◀️ Volver a configuración</button>
+    </div>
+
+    <div id="modal-detalle-pedido">
+        <div>
+            <h2 id="modal-detalle-titulo" style="margin-top:0; color:#8B0000; font-size:22px;"></h2>
+            <div id="modal-detalle-contenido"></div>
+            <button class="btn btn-sec" style="margin-top:16px;" onclick="cerrarModalDetalle()">Cerrar</button>
+        </div>
+    </div>
+
     <div id="scr-tapers" class="screen">
         <h3 style="text-align: center;">CONTROL DE TÁPERS</h3>
         <div class="table-container">
             <table>
-                <thead><tr><th style="width: 15%;">Sec.</th><th>Cliente</th><th style="width: 15%;">Cant.</th><th>Estado</th><th>Nota</th></tr></thead>
+                <thead><tr><th style="width: 15%;">Zona</th><th>Cliente</th><th style="width: 15%;">Cant.</th><th>Estado</th><th>Nota</th></tr></thead>
                 <tbody id="body-tapers"></tbody>
             </table>
         </div>
         <button class="btn btn-sec" style="margin-top: 20px;" onclick="nav('scr-resumen-tabla')">◀️ Volver</button>
     </div>
 
-    <div id="scr-final" class="screen">
+    <div id="modal-tapers" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.72); z-index:3000; padding:20px; align-items:center; justify-content:center;">
+        <div style="background:white; color:#1a1a1a; width:100%; max-width:430px; border-radius:14px; padding:20px; max-height:90vh; overflow:auto;">
+            <h3 id="modal-tapers-titulo" style="margin-top:0; color:#8B0000;">Tápers pendientes</h3>
+            <div id="modal-tapers-contenido"></div>
+            <button class="btn btn-sec" onclick="cerrarModalTapers()">Cerrar</button>
+        </div>
+    </div>
+
+  <div id="scr-final" class="screen">
         <div class="resumen-box">
             <h2 style="border-bottom: 2px solid #8B0000; padding-bottom: 10px;">REPORTE FINAL</h2>
-            <div id="res-s1" class="resumen-item" style="font-size: 1.2rem; margin: 10px 0;"></div>
-            <div id="res-s2" class="resumen-item" style="font-size: 1.2rem; margin: 10px 0;"></div>
+            <div id="res-s1" class="resumen-item" style="font-size: 1.1rem; margin: 10px auto; text-align:center;"></div>
             <hr style="border-color: #444;">
-            <div class="resumen-item">Total platos: <span class="highlight" id="res-total-platos">0</span></div>
-            <div class="resumen-item">Total dinero: <span class="highlight" id="res-total-dinero">0</span> Bs</div>
+            <div class="reporte-totales">
+              <div class="resumen-item">Total de sopas: <span class="highlight" id="res-total-sopas">0</span></div>
+              <div class="resumen-item">Total de segundos: <span class="highlight" id="res-total-platos">0</span></div>
+              <div class="resumen-item">Total dinero: <span class="highlight" id="res-total-dinero">0</span> Bs</div>
+            </div>
             <div id="lista-deben-taper" style="margin-top:15px; font-size: 11px; color:#aaa; font-style: italic;"></div>
         </div>
         
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="btn btn-sec" style="flex: 1;" onclick="nav('scr-resumen-tabla')">◀️ Corregir</button>
-            <button class="btn btn-main" style="flex: 2;" onclick="guardarYSalir()">💾 Guardar y Salir</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap:wrap;">
+            <button class="btn btn-sec" style="flex: 1; min-width:120px;" onclick="nav('scr-resumen-tabla')">◀️ Corregir</button>
+            <button class="btn btn-add" style="flex: 1; min-width:170px; background:#003366;" onclick="mostrarClientesTapers()">🥡 Clientes que deben tápers</button>
+            <button class="btn btn-main" style="flex: 1; min-width:150px;" onclick="guardarYSalir()">💾 Guardar y Salir</button>
         </div>
     </div>
 
@@ -200,7 +265,7 @@ if (!navigator.onLine) {
 
 // --- ESTADO INICIAL DE LA APP ---
 let appData = {
-    config: { fecha: '', sopa: '', s1: '', s2: '', precio: 15, soloUno: false },
+    config: { fecha: '', sopa: '', s1: '', s2: '', s3: '', s4: '', s5: '', seconds: [], extra: null, precio: 15, soloUno: false },
     clientes: [],
     // Lista inicial de zonas
     zonas: ["PIL", "Puente", "Choclos", "Sandía", "Frutas", "Bananas", "Camiones", "Coca", "Abarrotes"],
@@ -217,6 +282,7 @@ function nav(screenId) {
     if (screenId === 'scr-resumen-tabla') renderTabla();
     if (screenId === 'scr-entrega') renderEntrega();
     if (screenId === 'scr-tapers') renderTapers();
+    if (screenId === 'scr-reportes') renderReportes();
     window.scrollTo(0, 0);
 }
 
@@ -247,22 +313,33 @@ function manejarCambioZona(index, valorSeleccionado) {
 }
 
 // --- CONFIGURACIÓN DEL DÍA ---
-function manejarTipoAlmuerzo(val) {
-    document.getElementById('wrapper-s2').style.display = (val === '17') ? 'none' : 'block';
-    document.getElementById('div-precio-manual').style.display = (val === 'OTRO') ? 'block' : 'none';
+function renderConfigSegundos() {
+    const count = Number(document.getElementById('conf-cantidad-segundos')?.value || 2);
+    const wrap = document.getElementById('config-segundos');
+    if (!wrap) return;
+    wrap.innerHTML = '';
+    for (let i = 1; i <= count; i++) {
+        const old = appData.config.seconds?.[i-1] || { name: appData.config['s'+i] || '', price: appData.config.precio || 15 };
+        wrap.innerHTML += `<div class="flex"><div><label>Segundo ${i}</label><input id="conf-s${i}" value="${old.name}" placeholder="Nombre del segundo"></div><div><label>Precio completo (Bs)</label><input id="conf-p${i}" type="number" value="${old.price || 15}"></div></div>`;
+    }
 }
 
-function iniciarPedidos() {
-    const confTipo = document.getElementById('conf-tipo').value;
-    let precioFinal = (confTipo === 'OTRO') ? Number(document.getElementById('conf-precio-manual').value) : Number(confTipo);
+function manejarTipoAlmuerzo() {}
 
+function iniciarPedidos() {
+    const count = Number(document.getElementById('conf-cantidad-segundos').value || 2);
+    const seconds = [];
+    for (let i = 1; i <= count; i++) seconds.push({ name: document.getElementById('conf-s'+i).value || `Segundo ${i}`, price: Number(document.getElementById('conf-p'+i).value) || 15 });
+    const extraNombre = document.getElementById('conf-extra-nombre').value.trim();
+    const extraPrecio = Number(document.getElementById('conf-extra-precio').value);
     appData.config = {
         fecha: document.getElementById('conf-fecha').value,
         sopa: document.getElementById('conf-sopa').value,
-        s1: document.getElementById('conf-s1').value || "S1",
-        s2: document.getElementById('conf-s2').value || "S2",
-        precio: precioFinal,
-        soloUno: (confTipo === '17')
+        seconds,
+        s1: seconds[0]?.name || '', s2: seconds[1]?.name || '', s3: seconds[2]?.name || '', s4: seconds[3]?.name || '', s5: seconds[4]?.name || '',
+        extra: extraNombre ? { name: extraNombre, price: extraPrecio || 0 } : null,
+        precio: seconds[0]?.price || 15,
+        soloUno: count === 1
     };
 
     if (appData.clientes.length === 0) agregarCliente();
@@ -274,6 +351,7 @@ function iniciarPedidos() {
 function agregarCliente() {
     const nuevo = {
         id: "id-" + Date.now(), nombre: '', seccion: '', cant1: 0, cant2: 0,
+        orders: { complete: [{item:'s1', qty:0}, {item:'s2', qty:0}], loose: [{item:'s1', qty:0}, {item:'s2', qty:0}] },
         entregado: false, taperEstado: 0, pago: 0, notaTaper: '',
         esReciente: appData.inicioDespacho 
     };
@@ -282,133 +360,126 @@ function agregarCliente() {
     guardarAuto();
 }
 
+function ensureClientOrders(c) {
+    if (!c.orders) c.orders = { complete: [], loose: [] };
+    ['complete','loose'].forEach(k => { if (!Array.isArray(c.orders[k])) c.orders[k] = []; });
+    if (!Array.isArray(c.orderRows)) {
+        c.orderRows = [];
+        c.orders.complete.forEach(o => { if (Number(o.qty) > 0) c.orderRows.push({ kind:'complete', quantities:{ [o.item]: Number(o.qty) } }); });
+        c.orders.loose.forEach(o => { if (Number(o.qty) > 0) c.orderRows.push({ kind:'loose', quantities:{ [o.item]: Number(o.qty) } }); });
+        if (c.orderRows.length === 0) c.orderRows = [{ kind:'', quantities:{} }];
+    }
+    return c.orderRows;
+}
+function menuOptions(selected, includeExtra=true) {
+    const seconds = appData.config.seconds?.length ? appData.config.seconds : [1,2].map((_,i)=>({name:appData.config['s'+(i+1)] || `Segundo ${i+1}`, price:appData.config.precio||15}));
+    let html = seconds.map((x,i)=>`<option value="s${i+1}" ${selected === 's'+(i+1) ? 'selected':''}>${i+1}. ${x.name}</option>`).join('');
+    if (includeExtra && appData.config.extra) html += `<option value="extra" ${selected === 'extra' ? 'selected':''}>Extra: ${appData.config.extra.name}</option>`;
+    return html;
+}
+function qtyOptions(value) { return `<option value="0">0</option>` + Array.from({length:10},(_,i)=>`<option value="${i+1}" ${Number(value)===i+1?'selected':''}>${i+1}</option>`).join(''); }
+function rowKindLabel(kind) { return kind === 'complete' ? '🍛 Almuerzo completo · incluye sopa' : (kind === 'loose' ? '🥡 Segundo suelto · sin sopa' : 'Seleccione el pedido'); }
+function renderPedidoRow(c, row, rowIndex) {
+    const kind = row.kind || '';
+    const options = kind === 'complete' || kind === 'loose'
+        ? `<div class="pedido-options">${(appData.config.seconds || []).map((sec,i)=>`<label>${i+1}. ${sec.name}<select onchange="setRowQty('${c.id}',${rowIndex},'s${i+1}',this.value)">${qtyOptions(row.quantities?.['s'+(i+1)] || 0)}</select></label>`).join('')}</div>`
+        : (kind === 'extra' ? `<label>🍽️ ${appData.config.extra?.name || 'Extra'}<select onchange="setRowQty('${c.id}',${rowIndex},'extra',this.value)">${qtyOptions(row.quantities?.extra || 0)}</select></label>` : '<div style="font-size:12px;color:#777;margin-top:5px;">Primero elige el tipo de pedido.</div>');
+    return `<div class="pedido-row ${kind}"><div class="flex" style="align-items:center;"><select onchange="setRowKind('${c.id}',${rowIndex},this.value)"><option value="" ${!kind?'selected':''}>Seleccione el pedido</option><option value="complete" ${kind==='complete'?'selected':''}>Almuerzo completo</option><option value="loose" ${kind==='loose'?'selected':''}>Segundo suelto</option><option value="extra" ${kind==='extra'?'selected':''}>Extra</option></select><button class="btn-del" style="position:static;flex:0 0 28px;" onclick="removeOrderRow('${c.id}',${rowIndex})">×</button></div><div>${rowKindLabel(kind)}</div>${options}</div>`;
+}
 function renderClientes() {
     const contenedor = document.getElementById('lista-clientes');
     if (!contenedor) return;
-    contenedor.innerHTML = '';
-    
+    contenedor.innerHTML = `<div class="menu-summary"><b>🍲 Sopa: ${appData.config.sopa || 'Sin sopa configurada'}</b><div style="font-size:12px; margin-top:4px;">Selecciona el tipo de pedido. Luego elige las cantidades de cada segundo.</div></div>`;
     appData.clientes.forEach((c, index) => {
-        // Generar opciones de zona + opción de añadir nueva
+        const rows = ensureClientOrders(c);
         let opcionesZonas = appData.zonas.map(z => `<option value="${z}" ${c.seccion === z ? 'selected' : ''}>${z}</option>`).join('');
-        
-        let botones1 = '', botones2 = '';
-        for (let n = 0; n <= 10; n++) {
-            botones1 += `<button class="qty-btn ${c.cant1 === n ? 'active' : ''}" onclick="setCant('${c.id}', 1, ${n})">${n}</button>`;
-            if (!appData.config.soloUno) {
-                botones2 += `<button class="qty-btn ${c.cant2 === n ? 'active' : ''}" onclick="setCant('${c.id}', 2, ${n})">${n}</button>`;
-            }
-        }
-
-        contenedor.innerHTML += `
-            <div class="card" id="${c.id}">
-                <button class="btn-del" onclick="eliminarCliente('${c.id}')">X</button>
-                <div class="flex">
-                    <div>
-                        <select onchange="manejarCambioZona(${index}, this.value)">
-                            <option value="">Zona...</option>
-                            ${opcionesZonas}
-                            <option value="NUEVA_ZONA" style="color: blue; font-weight: bold;">➕ Añadir nueva zona...</option>
-                        </select>
-                    </div>
-                    <div><input type="text" placeholder="Nombre" value="${c.nombre}" oninput="actualizarDato(${index}, 'nombre', this.value)"></div>
-                </div>
-                <div style="margin-top:8px;">
-                    <label style="font-size:11px; font-weight:bold;">${appData.config.s1}:</label>
-                    <div class="qty-selector">${botones1}</div>
-                    ${!appData.config.soloUno ? `
-                        <label style="font-size:11px; font-weight:bold; margin-top:5px; display:block;">${appData.config.s2}:</label>
-                        <div class="qty-selector">${botones2}</div>
-                    ` : ''}
-                </div>
-                <div class="flex" style="margin-top:10px; align-items:center;">
-                    <span style="font-size:12px;">Pago Bs:</span>
-                    <input type="number" style="width:80px; margin:0;" value="${c.pago}" oninput="actualizarDato(${index}, 'pago', this.value)">
-                </div>
-            </div>`;
+        contenedor.innerHTML += `<div class="card" id="${c.id}">
+            <button class="btn-del" onclick="eliminarCliente('${c.id}')">X</button>
+            <div class="flex"><div><select onchange="manejarCambioZona(${index}, this.value)"><option value="">Zona...</option>${opcionesZonas}<option value="NUEVA_ZONA">➕ Añadir nueva zona...</option></select></div><div><input type="text" placeholder="Nombre" value="${c.nombre}" oninput="actualizarDato(${index}, 'nombre', this.value)"></div></div>
+            <div>${rows.map((row,ri)=>renderPedidoRow(c,row,ri)).join('')}</div>
+            <button class="btn btn-sec btn-mini" onclick="addOrderRow('${c.id}')">＋ Agregar otro tipo de pedido</button>
+            <div class="flex" style="margin-top:10px; align-items:center;"><span style="font-size:12px;">Pago Bs:</span><input type="number" style="width:80px; margin:0;" value="${c.pago}" oninput="actualizarDato(${index}, 'pago', this.value)"></div>
+        </div>`;
     });
 }
-
-function setCant(id, plato, num) {
-    const i = appData.clientes.findIndex(c => c.id === id);
-    if (plato === 1) appData.clientes[i].cant1 = num;
-    else appData.clientes[i].cant2 = num;
-    guardarAuto();
-    renderClientes();
+function syncLegacyOrders(c) {
+    c.orders = { complete: [], loose: [] };
+    (c.orderRows || []).forEach(row => {
+        const kind = row.kind === 'complete' ? 'complete' : (row.kind === 'loose' ? 'loose' : 'complete');
+        Object.entries(row.quantities || {}).forEach(([item, qty]) => { if (Number(qty) > 0) c.orders[kind].push({item, qty:Number(qty)}); });
+    });
+    c.cant1 = c.orders.complete.find(o=>o.item==='s1')?.qty || 0;
+    c.cant2 = c.orders.complete.find(o=>o.item==='s2')?.qty || 0;
 }
+function setRowKind(id, rowIndex, kind) {
+    const c = appData.clientes.find(c => c.id === id); ensureClientOrders(c);
+    c.orderRows[rowIndex] = { kind, quantities: {} };
+    if (kind === 'extra') c.orderRows[rowIndex].quantities.extra = 0;
+    guardarAuto(); renderClientes();
+}
+function setRowQty(id, rowIndex, item, value) {
+    const c = appData.clientes.find(c => c.id === id); ensureClientOrders(c);
+    c.orderRows[rowIndex].quantities[item] = Number(value);
+    syncLegacyOrders(c); guardarAuto(); renderClientes();
+}
+function addOrderRow(id) {
+    const c = appData.clientes.find(c => c.id === id); ensureClientOrders(c);
+    c.orderRows.push({ kind:'', quantities:{} }); guardarAuto(); renderClientes();
+}
+function removeOrderRow(id, rowIndex) {
+    const c = appData.clientes.find(c => c.id === id); ensureClientOrders(c);
+    if (c.orderRows.length > 1) c.orderRows.splice(rowIndex,1); else c.orderRows[0] = { kind:'', quantities:{} };
+    syncLegacyOrders(c); guardarAuto(); renderClientes();
+}
+
+function itemName(item) {
+    if (item === 'extra') return appData.config.extra?.name || 'Extra';
+    const i = Number(String(item).replace('s','')) - 1;
+    return appData.config.seconds?.[i]?.name || appData.config['s'+(i+1)] || `Segundo ${i+1}`;
+}
+function itemPrice(item) {
+    if (item === 'extra') return Number(appData.config.extra?.price || 0);
+    const i = Number(String(item).replace('s','')) - 1;
+    const completePrice = Number(appData.config.seconds?.[i]?.price || appData.config.precio || 15);
+    return completePrice;
+}
+function clientItems(c) {
+    const rows = ensureClientOrders(c), out=[];
+    rows.forEach(row => { Object.entries(row.quantities || {}).forEach(([item, qty]) => { if (Number(qty)>0) out.push({kind: row.kind === 'complete' ? 'complete' : (row.kind === 'loose' ? 'loose' : 'extra'), item, qty:Number(qty)}); }); });
+    return out;
+}
+function clientTotal(c) { return clientItems(c).reduce((sum,o)=> { const price = o.kind === 'loose' && o.item !== 'extra' ? Math.max(0, itemPrice(o.item) - 3) : itemPrice(o.item); return sum + o.qty * price; }, 0); }
+function clientOrderText(c) { return clientItems(c).map(o => { const type = o.item === 'extra' ? 'Extra' : (o.kind === 'complete' ? 'Almuerzo completo' : 'Segundo suelto'); const cls = o.item === 'extra' ? 'badge-extra' : (o.kind === 'complete' ? 'badge-complete' : 'badge-loose'); return `<span class="type-badge ${cls}">${type}</span> ${itemName(o.item)} x${o.qty}`; }).join('<br>') || 'Sin pedido'; }
 
 // --- TABLAS CON LÍNEA NEGRA ---
 function renderTabla() {
     const headerRow = document.getElementById('header-row-resumen');
-    const s1Ini = (appData.config.s1 || "S1").charAt(0).toUpperCase();
-    const s2Ini = (appData.config.s2 || "S2").charAt(0).toUpperCase();
-    const numCols = appData.config.soloUno ? 6 : 7;
-
-    headerRow.innerHTML = `<th>Sec.</th><th>Cliente</th><th>Est.</th><th>${s1Ini}</th>${!appData.config.soloUno ? `<th>${s2Ini}</th>` : ''}<th>Pago</th><th>Tp</th>`;
-
-    const body = document.getElementById('body-tabla');
-    body.innerHTML = '';
-    
-    let normales = appData.clientes.filter(c => !c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
-    let recientes = appData.clientes.filter(c => c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
-
-    const fRes = (c) => {
-        let ico = c.taperEstado === 1 ? '🆗' : (c.taperEstado === 2 ? '❌' : '⚠️');
-        return `<tr onclick="irACliente('${c.id}')">
-            <td>${c.seccion}</td><td>${c.nombre}</td>
-            <td><span class="status-pill ${c.entregado ? 'bg-verde':'bg-naranja'}">${c.entregado ? 'SÍ':'NO'}</span></td>
-            <td>${c.cant1}</td>${!appData.config.soloUno ? `<td>${c.cant2}</td>` : ''}
-            <td>${c.pago} Bs</td><td>${ico}</td>
-        </tr>`;
-    };
-
-    normales.forEach(c => body.innerHTML += fRes(c));
-    if (recientes.length > 0) {
-        body.innerHTML += `<tr><td colspan="${numCols}" class="linea-separacion" style="background:#000; color:#fff; text-align:center; font-weight:bold;">PEDIDOS RECIENTES</td></tr>`;
-        recientes.forEach(c => body.innerHTML += fRes(c));
-    }
+    headerRow.innerHTML = `<th>Zona</th><th>Cliente</th><th>Pedido</th><th>Pago</th>`;
+    const body = document.getElementById('body-tabla'); body.innerHTML = '';
+    const ordered = [...appData.clientes].filter(c=>c.nombre).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+    ordered.forEach(c => body.innerHTML += `<tr onclick="irACliente('${c.id}')"><td>${c.seccion}</td><td>${c.nombre}</td><td style="text-align:left;">${clientOrderText(c)}</td><td>${c.pago || clientTotal(c)} Bs</td></tr>`);
 }
-
 function renderEntrega() {
-    const body = document.getElementById('body-entrega');
-    body.innerHTML = '';
-    let normales = appData.clientes.filter(c => !c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
-    let recientes = appData.clientes.filter(c => c.esReciente).sort((a,b) => a.seccion.localeCompare(b.seccion));
-
-    const fEnt = (c) => {
-        const deuda = (Number(c.cant1) + Number(c.cant2)) * appData.config.precio;
-        let clase = (c.pago >= deuda && deuda > 0) ? "fila-pagada" : (c.entregado ? "fila-entregada" : "");
-        let ped = appData.config.soloUno ? c.cant1 : `${c.cant1}/${c.cant2}`;
-        return `<tr class="${clase}">
-            <td>${c.seccion}</td><td>${c.nombre}</td><td>${ped}</td>
-            <td onclick="toggleEntrega('${c.id}')" style="cursor:pointer; font-weight:bold;">${c.entregado ? '✅':'⭕'}</td>
-            <td onclick="togglePago('${c.id}', ${deuda})" style="cursor:pointer;">${c.pago || deuda} Bs</td>
-        </tr>`;
-    };
-
-    normales.forEach(c => body.innerHTML += fEnt(c));
-    if (recientes.length > 0) {
-        body.innerHTML += `<tr><td colspan="5" class="linea-separacion" style="background:#000; color:#fff; text-align:center; font-weight:bold;">PEDIDOS RECIENTES</td></tr>`;
-        recientes.forEach(c => body.innerHTML += fEnt(c));
-    }
-}
-
-// --- TÁPERS ---
-function renderTapers() {
-    const body = document.getElementById('body-tapers');
-    body.innerHTML = '';
-    appData.clientes.forEach(c => {
-        if(!c.nombre) return;
-        const total = Number(c.cant1) + Number(c.cant2);
-        let clase = c.taperEstado === 1 ? "fila-taper-ok" : (c.taperEstado === 2 ? "fila-taper-incompleto" : "");
-        let texto = c.taperEstado === 1 ? "✅ REC." : (c.taperEstado === 2 ? "❌ INC." : "⚠️ PEND.");
-        body.innerHTML += `<tr class="${clase}">
-            <td>${c.seccion}</td><td>${c.nombre}</td><td>${total}</td>
-            <td onclick="toggleTaperEstado('${c.id}')" style="cursor:pointer; font-weight:bold;">${texto}</td>
-            <td><input type="text" style="width:90%;" value="${c.notaTaper || ''}" oninput="updateNota('${c.id}', this.value)"></td>
-        </tr>`;
+    const body = document.getElementById('body-entrega'); body.innerHTML = '';
+    const ordered = [...appData.clientes].filter(c=>c.nombre).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+    ordered.forEach(c => {
+        const deuda = clientTotal(c), clase = (c.pago >= deuda && deuda > 0) ? 'fila-pagada' : (c.entregado ? 'fila-entregada' : '');
+        body.innerHTML += `<tr class="${clase}"><td>${c.seccion}</td><td onclick="toggleEntrega('${c.id}')" style="cursor:pointer;font-weight:bold;">${c.nombre}<br><small>${c.entregado?'✅ Entregado':'⭕ Pendiente'}</small></td><td class="pedido-clickeable" onclick="abrirDetallePedido('${c.id}')">${clientOrderText(c)}<br><small style="font-weight:400;color:#555;">Tocar para ver detalle</small></td><td onclick="togglePago('${c.id}', ${deuda})" style="cursor:pointer;">${c.pago || deuda} Bs</td></tr>`;
     });
 }
-
+// --- TÁPERS ---
+function renderTapers() {
+    const body = document.getElementById('body-tapers'); body.innerHTML = '';
+    [...appData.clientes].filter(c=>c.nombre).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')).forEach(c => {
+        const total = clientItems(c).reduce((n,o)=>n+o.qty,0);
+        let clase = c.taperEstado === 1 ? 'fila-taper-ok' : (c.taperEstado === 2 ? 'fila-taper-incompleto' : '');
+        let texto = c.taperEstado === 1 ? '✅ REC.' : (c.taperEstado === 2 ? '❌ INC.' : '⚠️ PEND.');
+        const selected = String(c.notaTaper||'').split(',').map(x=>x.trim()).filter(Boolean);
+        const notaTexto = selected.length ? selected.join(', ') : 'Seleccionar tápers';
+        const nota = `<button type="button" class="nota-taper-btn" onclick="abrirModalTaper('${c.id}')">${notaTexto}</button>`;
+        body.innerHTML += `<tr class="${clase}"><td>${c.seccion}</td><td>${c.nombre}</td><td>${total}</td><td onclick="toggleTaperEstado('${c.id}')" style="cursor:pointer;font-weight:bold;">${texto}</td><td>${nota}</td></tr>`;
+    });
+}
 // --- AUXILIARES ---
 function toggleEntrega(id) {
     const i = appData.clientes.findIndex(c => c.id === id);
@@ -432,7 +503,76 @@ function toggleTaperEstado(id) {
 function updateNota(id, val) {
     const i = appData.clientes.findIndex(c => c.id === id);
     appData.clientes[i].notaTaper = val;
-    guardarAuto();
+    if (val) appData.clientes[i].taperEstado = 2;
+    guardarAuto(); renderTapers();
+}
+
+function abrirModalTaper(id) {
+    const cliente = appData.clientes.find(c => c.id === id);
+    if (!cliente) return;
+    const selected = String(cliente.notaTaper || '').split(',').map(x => x.trim()).filter(Boolean);
+    const opciones = ['Segundero', 'Sopero', 'Postrero', 'Capibara'];
+    document.getElementById('modal-tapers-titulo').innerText = `Tápers pendientes de ${cliente.nombre}`;
+    document.getElementById('modal-tapers-contenido').innerHTML = `<p style="margin-top:0;">Marca uno, varios o todos los tápers que debe:</p>` + opciones.map(op => `<label style="display:flex; align-items:center; gap:10px; padding:12px 6px; border-bottom:1px solid #eee; font-size:18px;"><input type="checkbox" value="${op}" ${selected.includes(op) ? 'checked' : ''} onchange="guardarNotaModal('${id}')" style="width:22px;height:22px;"> ${op}</label>`).join('');
+    document.getElementById('modal-tapers').style.display = 'flex';
+}
+
+function guardarNotaModal(id) {
+    const valores = Array.from(document.querySelectorAll('#modal-tapers-contenido input[type="checkbox"]:checked')).map(input => input.value);
+    updateNota(id, valores.join(', '));
+}
+
+function cerrarModalTapers() {
+    document.getElementById('modal-tapers').style.display = 'none';
+}
+
+function mostrarClientesTapers() {
+    const pendientes = appData.clientes.filter(c => c.nombre && String(c.notaTaper || '').trim());
+    document.getElementById('modal-tapers-titulo').innerText = 'Clientes que deben tápers';
+    document.getElementById('modal-tapers-contenido').innerHTML = pendientes.length ? pendientes.sort((a,b) => a.nombre.localeCompare(b.nombre, 'es')).map(c => `<div style="padding:12px 0; border-bottom:1px solid #eee;"><strong>${c.nombre}</strong><br><span style="color:#8B0000;">Debe: ${c.notaTaper}</span></div>`).join('') : '<p>No hay clientes con tápers pendientes.</p>';
+    document.getElementById('modal-tapers').style.display = 'flex';
+}
+
+function abrirDetallePedido(id) {
+    const cliente = appData.clientes.find(c => c.id === id);
+    if (!cliente) return;
+    const agrupado = {};
+    clientItems(cliente).forEach(o => {
+        const tipo = o.item === 'extra' ? '' : (o.kind === 'complete' ? ' completo' : ' suelto');
+        const clave = `${itemName(o.item)}|${tipo}`;
+        agrupado[clave] = (agrupado[clave] || 0) + o.qty;
+    });
+    const lineas = Object.entries(agrupado).map(([clave, cantidad]) => {
+        const [nombre, tipo] = clave.split('|');
+        return `<div class="detalle-pedido-linea"><span>${nombre}${tipo}</span><span class="detalle-pedido-cantidad">${cantidad}</span></div>`;
+    }).join('');
+    document.getElementById('modal-detalle-titulo').innerText = `A ${cliente.nombre} se debe:`;
+    document.getElementById('modal-detalle-contenido').innerHTML = lineas || '<p>No hay productos registrados.</p>';
+    document.getElementById('modal-detalle-pedido').style.display = 'flex';
+}
+function cerrarModalDetalle() { document.getElementById('modal-detalle-pedido').style.display = 'none'; }
+
+function obtenerHistorial() { try { return JSON.parse(localStorage.getItem('rancho_historial') || '[]'); } catch (e) { return []; } }
+function construirReporteActual() {
+    const counts = {}, soups = 0, totalSeconds = 0, totalMoney = appData.clientes.reduce((sum,c) => sum + clientTotal(c), 0);
+    let soupCount = 0, secondsCount = 0;
+    appData.clientes.forEach(c => clientItems(c).forEach(o => { counts[o.item] = (counts[o.item] || 0) + o.qty; if (o.item !== 'extra') secondsCount += o.qty; if (o.kind === 'complete' && o.item !== 'extra') soupCount += o.qty; }));
+    return { fecha: appData.config.fecha || new Date().toISOString().slice(0,10), sopa: appData.config.sopa || '', seconds: appData.config.seconds || [], extra: appData.config.extra || null, counts, totalSopas: soupCount, totalSeconds: secondsCount, totalDinero: Number(totalMoney.toFixed(2)), clientes: appData.clientes.filter(c => c.nombre).map(c => ({ nombre:c.nombre, seccion:c.seccion, items:clientItems(c), entregado:!!c.entregado, pago:Number(c.pago || 0) })) };
+}
+function mostrarReportes() { nav('scr-reportes'); }
+function renderReportes() {
+    const cont = document.getElementById('lista-reportes');
+    const historial = obtenerHistorial();
+    cont.innerHTML = historial.length ? historial.map((r,i) => `<div class="card reporte-historico"><b>Jornada del ${r.fecha}</b><br><span>${r.totalSeconds} segundos · ${r.totalSopas} sopas · ${Number(r.totalDinero).toFixed(2)} Bs</span><button class="btn btn-main" onclick="mostrarReporteGuardado(${i})">Ver reporte completo</button></div>`).join('') : '<div class="card"><b>Aún no hay reportes guardados.</b><p>Cuando termines una jornada, presiona “Guardar y salir”.</p></div>';
+}
+function mostrarReporteGuardado(index) {
+    const r = obtenerHistorial()[index];
+    if (!r) return;
+    const lineas = (r.seconds || []).map((s,i) => `<div class="detalle-pedido-linea"><span>${s.name}</span><span class="detalle-pedido-cantidad">${r.counts?.['s'+(i+1)] || 0}</span></div>`).join('');
+    const extra = r.extra ? `<div class="detalle-pedido-linea"><span>${r.extra.name} (extra)</span><span class="detalle-pedido-cantidad">${r.counts?.extra || 0}</span></div>` : '';
+    document.getElementById('modal-detalle-titulo').innerText = `Reporte del ${r.fecha}`;
+    document.getElementById('modal-detalle-contenido').innerHTML = `${lineas}${extra}<hr><p><b>Total de sopas:</b> ${r.totalSopas}</p><p><b>Total de segundos:</b> ${r.totalSeconds}</p><p><b>Total dinero:</b> ${Number(r.totalDinero).toFixed(2)} Bs</p>`;
+    document.getElementById('modal-detalle-pedido').style.display = 'flex';
 }
 
 function actualizarDato(index, campo, valor) {
@@ -455,23 +595,33 @@ function irACliente(id) {
 
 // --- CIERRE FINAL ---
 function mostrarCierreFinal() {
-    let t1 = 0, t2 = 0, tD = 0, faltanT = [];
+    const counts = {}, soups = { value: 0 }, totalSeconds = { value: 0 }, totalMoney = { value: 0 }, faltanT = [];
     appData.clientes.forEach(c => {
-        t1 += Number(c.cant1); t2 += Number(c.cant2); tD += Number(c.pago);
+        clientItems(c).forEach(o => {
+            const key = o.item === 'extra' ? 'extra' : o.item;
+            counts[key] = (counts[key] || 0) + o.qty;
+            if (o.item !== 'extra') totalSeconds.value += o.qty;
+            if (o.kind === 'complete' && o.item !== 'extra') soups.value += o.qty;
+        });
+        totalMoney.value += clientTotal(c);
         if (c.nombre && c.taperEstado !== 1) faltanT.push(c.nombre);
     });
-    document.getElementById('res-s1').innerHTML = `${appData.config.s1}: <b>${t1}</b>`;
-    const r2 = document.getElementById('res-s2');
-    r2.style.display = appData.config.soloUno ? 'none' : 'block';
-    r2.innerHTML = `${appData.config.s2}: <b>${t2}</b>`;
-    document.getElementById('res-total-platos').innerText = t1 + t2;
-    document.getElementById('res-total-dinero').innerText = tD;
+    const seconds = appData.config.seconds || [];
+    const lines = seconds.map((sec,i) => `<div class="reporte-comida"><b>${sec.name}</b><span class="cantidad"><span class="highlight">${counts['s'+(i+1)] || 0}</span> platos</span></div>`);
+    if (appData.config.extra) lines.push(`<div class="reporte-comida"><b>${appData.config.extra.name}</b><span class="cantidad"><span class="highlight">${counts.extra || 0}</span> platos extra</span></div>`);
+    document.getElementById('res-s1').innerHTML = `<div class="reporte-comidas">${lines.join('') || '<div class="reporte-comida">Sin pedidos</div>'}</div>`;
+    document.getElementById('res-total-sopas').innerText = soups.value;
+    document.getElementById('res-total-platos').innerText = totalSeconds.value;
+    document.getElementById('res-total-dinero').innerText = totalMoney.value.toFixed(2);
     document.getElementById('lista-deben-taper').innerText = "Pendientes táper: " + (faltanT.join(", ") || "Ninguno");
     nav('scr-final');
 }
 
 function guardarYSalir() {
-    if (confirm("¿Finalizar el día?")) {
+    if (confirm("¿Finalizar el día y guardar el reporte en este celular?")) {
+        const historial = obtenerHistorial();
+        historial.unshift({ ...construirReporteActual(), guardadoEn: new Date().toISOString() });
+        localStorage.setItem('rancho_historial', JSON.stringify(historial.slice(0, 100)));
         localStorage.removeItem('rancho_vFinal_Zonas');
         location.reload();
     }
@@ -482,9 +632,12 @@ window.onload = function() {
     const data = localStorage.getItem('rancho_vFinal_Zonas');
     if (data) {
         appData = JSON.parse(data);
+        if (!appData.config.seconds) appData.config.seconds = [1,2].map((_,i)=>({name:appData.config['s'+(i+1)] || `Segundo ${i+1}`, price:appData.config.precio || 15}));
+        appData.clientes.forEach(ensureClientOrders);
         if (appData.clientes.length > 0) nav('scr-pedidos');
     }
     document.getElementById('conf-fecha').valueAsDate = new Date();
+    renderConfigSegundos();
 };
 
   </script>
