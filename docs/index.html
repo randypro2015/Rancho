@@ -352,8 +352,8 @@ function agregarCliente() {
     const nuevo = {
         id: "id-" + Date.now(), nombre: '', seccion: '', cant1: 0, cant2: 0,
         orders: { complete: [{item:'s1', qty:0}, {item:'s2', qty:0}], loose: [{item:'s1', qty:0}, {item:'s2', qty:0}] },
-        entregado: false, taperEstado: 0, pago: 0, notaTaper: '',
-        esReciente: appData.inicioDespacho 
+        entregado: false, taperEstado: 0, pago: 0, notaTaper: '', tapers: {},
+        ordenLlegada: Math.max(0, ...appData.clientes.map(c => Number(c.ordenLlegada) || 0)) + 1, esReciente: appData.inicioDespacho
     };
     appData.clientes.unshift(nuevo);
     renderClientes();
@@ -461,7 +461,21 @@ function renderTabla() {
 }
 function renderEntrega() {
     const body = document.getElementById('body-entrega'); body.innerHTML = '';
-    const ordered = [...appData.clientes].filter(c=>c.nombre).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+    // Agrupar por la zona del primer pedido y respetar la llegada dentro de cada grupo.
+    const clientesConNombre = [...appData.clientes].filter(c=>c.nombre);
+    const zonasEnOrdenDeLlegada = [];
+    clientesConNombre.forEach(c => {
+        const zona = String(c.seccion || 'Sin zona');
+        if (!zonasEnOrdenDeLlegada.includes(zona)) zonasEnOrdenDeLlegada.push(zona);
+    });
+    const ordered = clientesConNombre.sort((a,b) => {
+        const zonaA = String(a.seccion || 'Sin zona');
+        const zonaB = String(b.seccion || 'Sin zona');
+        const grupoA = zonasEnOrdenDeLlegada.indexOf(zonaA);
+        const grupoB = zonasEnOrdenDeLlegada.indexOf(zonaB);
+        if (grupoA !== grupoB) return grupoA - grupoB;
+        return (Number(a.ordenLlegada) || 0) - (Number(b.ordenLlegada) || 0);
+    });
     ordered.forEach(c => {
         const deuda = clientTotal(c), clase = (c.pago >= deuda && deuda > 0) ? 'fila-pagada' : (c.entregado ? 'fila-entregada' : '');
         body.innerHTML += `<tr class="${clase}"><td>${c.seccion}</td><td onclick="toggleEntrega('${c.id}')" style="cursor:pointer;font-weight:bold;">${c.nombre}<br><small>${c.entregado?'✅ Entregado':'⭕ Pendiente'}</small></td><td class="pedido-clickeable" onclick="abrirDetallePedido('${c.id}')">${clientOrderText(c)}<br><small style="font-weight:400;color:#555;">Tocar para ver detalle</small></td><td onclick="togglePago('${c.id}', ${deuda})" style="cursor:pointer;">${c.pago || deuda} Bs</td></tr>`;
@@ -474,8 +488,10 @@ function renderTapers() {
         const total = clientItems(c).reduce((n,o)=>n+o.qty,0);
         let clase = c.taperEstado === 1 ? 'fila-taper-ok' : (c.taperEstado === 2 ? 'fila-taper-incompleto' : '');
         let texto = c.taperEstado === 1 ? '✅ REC.' : (c.taperEstado === 2 ? '❌ INC.' : '⚠️ PEND.');
-        const selected = String(c.notaTaper||'').split(',').map(x=>x.trim()).filter(Boolean);
-        const notaTexto = selected.length ? selected.join(', ') : 'Seleccionar tápers';
+        if (!c.tapers || typeof c.tapers !== 'object') c.tapers = {};
+        const tiposTaper = ['Segundero', 'Sopero', 'Postrero', 'Capibara'];
+        const cantidades = tiposTaper.filter(tipo => Number(c.tapers[tipo]) > 0).map(tipo => `${tipo}: ${Number(c.tapers[tipo])}`);
+        const notaTexto = cantidades.length ? cantidades.join(', ') : 'Definir cantidades';
         const nota = `<button type="button" class="nota-taper-btn" onclick="abrirModalTaper('${c.id}')">${notaTexto}</button>`;
         body.innerHTML += `<tr class="${clase}"><td>${c.seccion}</td><td>${c.nombre}</td><td>${total}</td><td onclick="toggleTaperEstado('${c.id}')" style="cursor:pointer;font-weight:bold;">${texto}</td><td>${nota}</td></tr>`;
     });
@@ -510,26 +526,41 @@ function updateNota(id, val) {
 function abrirModalTaper(id) {
     const cliente = appData.clientes.find(c => c.id === id);
     if (!cliente) return;
-    const selected = String(cliente.notaTaper || '').split(',').map(x => x.trim()).filter(Boolean);
+    if (!cliente.tapers || typeof cliente.tapers !== 'object') cliente.tapers = {};
     const opciones = ['Segundero', 'Sopero', 'Postrero', 'Capibara'];
     document.getElementById('modal-tapers-titulo').innerText = `Tápers pendientes de ${cliente.nombre}`;
-    document.getElementById('modal-tapers-contenido').innerHTML = `<p style="margin-top:0;">Marca uno, varios o todos los tápers que debe:</p>` + opciones.map(op => `<label style="display:flex; align-items:center; gap:10px; padding:12px 6px; border-bottom:1px solid #eee; font-size:18px;"><input type="checkbox" value="${op}" ${selected.includes(op) ? 'checked' : ''} onchange="guardarNotaModal('${id}')" style="width:22px;height:22px;"> ${op}</label>`).join('');
+    document.getElementById('modal-tapers-contenido').innerHTML = `<p style="margin-top:0;">Indica cuántos debe de cada tipo. Usa 0 si no debe ninguno:</p>` + opciones.map(op => `<label style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 6px; border-bottom:1px solid #eee; font-size:18px;"><span>${op}</span><input type="number" min="0" max="99" step="1" value="${Number(cliente.tapers[op] || 0)}" data-taper="${op}" onchange="guardarNotaModal('${id}')" style="width:90px; text-align:center;"></label>`).join('');
     document.getElementById('modal-tapers').style.display = 'flex';
 }
 
 function guardarNotaModal(id) {
-    const valores = Array.from(document.querySelectorAll('#modal-tapers-contenido input[type="checkbox"]:checked')).map(input => input.value);
-    updateNota(id, valores.join(', '));
+    const cliente = appData.clientes.find(c => c.id === id);
+    if (!cliente) return;
+    cliente.tapers = {};
+    document.querySelectorAll('#modal-tapers-contenido input[data-taper]').forEach(input => {
+        const cantidad = Math.max(0, Number.parseInt(input.value, 10) || 0);
+        if (cantidad > 0) cliente.tapers[input.dataset.taper] = cantidad;
+    });
+    const tipos = ['Segundero', 'Sopero', 'Postrero', 'Capibara'];
+    cliente.notaTaper = tipos.filter(tipo => cliente.tapers[tipo] > 0).map(tipo => `${tipo}: ${cliente.tapers[tipo]}`).join(', ');
+    if (cliente.notaTaper) cliente.taperEstado = 2;
+    guardarAuto(); renderTapers();
 }
 
 function cerrarModalTapers() {
     document.getElementById('modal-tapers').style.display = 'none';
 }
 
+function fechaVisible(fecha) {
+    if (!fecha) return new Date().toLocaleDateString('es-BO');
+    const fechaLocal = new Date(`${fecha}T00:00:00`);
+    return Number.isNaN(fechaLocal.getTime()) ? fecha : fechaLocal.toLocaleDateString('es-BO', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
 function mostrarClientesTapers() {
     const pendientes = appData.clientes.filter(c => c.nombre && String(c.notaTaper || '').trim());
     document.getElementById('modal-tapers-titulo').innerText = 'Clientes que deben tápers';
-    document.getElementById('modal-tapers-contenido').innerHTML = pendientes.length ? pendientes.sort((a,b) => a.nombre.localeCompare(b.nombre, 'es')).map(c => `<div style="padding:12px 0; border-bottom:1px solid #eee;"><strong>${c.nombre}</strong><br><span style="color:#8B0000;">Debe: ${c.notaTaper}</span></div>`).join('') : '<p>No hay clientes con tápers pendientes.</p>';
+    const fecha = `<div style="padding:0 0 12px; margin-bottom:4px; border-bottom:2px solid #8B0000; font-weight:bold;">Fecha: ${fechaVisible(appData.config.fecha)}</div>`;
+    document.getElementById('modal-tapers-contenido').innerHTML = fecha + (pendientes.length ? pendientes.sort((a,b) => a.nombre.localeCompare(b.nombre, 'es')).map(c => `<div style="padding:12px 0; border-bottom:1px solid #eee;"><strong>${c.nombre}</strong><br><span style="color:#8B0000;">Debe: ${c.notaTaper}</span></div>`).join('') : '<p>No hay clientes con tápers pendientes.</p>');
     document.getElementById('modal-tapers').style.display = 'flex';
 }
 
@@ -544,10 +575,10 @@ function abrirDetallePedido(id) {
     });
     const lineas = Object.entries(agrupado).map(([clave, cantidad]) => {
         const [nombre, tipo] = clave.split('|');
-        return `<div class="detalle-pedido-linea"><span>${nombre}${tipo}</span><span class="detalle-pedido-cantidad">${cantidad}</span></div>`;
+        return `<div class="detalle-pedido-linea"><span class="detalle-pedido-cantidad">${cantidad}</span><span style="flex:1;">${nombre}${tipo}</span></div>`;
     }).join('');
     document.getElementById('modal-detalle-titulo').innerText = `A ${cliente.nombre} se debe:`;
-    document.getElementById('modal-detalle-contenido').innerHTML = lineas || '<p>No hay productos registrados.</p>';
+    document.getElementById('modal-detalle-contenido').innerHTML = (lineas || '<p>No hay productos registrados.</p>') + `<hr><p style="font-size:20px; font-weight:bold; text-align:right; color:#8B0000;">Total a pagar: ${clientTotal(cliente).toFixed(2)} Bs</p>`;
     document.getElementById('modal-detalle-pedido').style.display = 'flex';
 }
 function cerrarModalDetalle() { document.getElementById('modal-detalle-pedido').style.display = 'none'; }
@@ -633,7 +664,12 @@ window.onload = function() {
     if (data) {
         appData = JSON.parse(data);
         if (!appData.config.seconds) appData.config.seconds = [1,2].map((_,i)=>({name:appData.config['s'+(i+1)] || `Segundo ${i+1}`, price:appData.config.precio || 15}));
-        appData.clientes.forEach(ensureClientOrders);
+        appData.clientes.forEach((c, i) => {
+            ensureClientOrders(c);
+            if (!c.tapers || typeof c.tapers !== 'object') c.tapers = {};
+            // Convertir datos antiguos, cuyo array estaba invertido, a un orden estable.
+            if (!c.ordenLlegada) c.ordenLlegada = appData.clientes.length - i;
+        });
         if (appData.clientes.length > 0) nav('scr-pedidos');
     }
     document.getElementById('conf-fecha').valueAsDate = new Date();
