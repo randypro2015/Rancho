@@ -497,19 +497,9 @@ function renderTabla() {
 }
 function renderEntrega() {
     const body = document.getElementById('body-entrega'); body.innerHTML = '';
-    // Agrupar por la zona del primer pedido y respetar la llegada dentro de cada grupo.
-    const clientesConNombre = [...appData.clientes].filter(c=>c.nombre);
-    const zonasEnOrdenDeLlegada = [];
-    clientesConNombre.forEach(c => {
-        const zona = String(c.seccion || 'Sin zona');
-        if (!zonasEnOrdenDeLlegada.includes(zona)) zonasEnOrdenDeLlegada.push(zona);
-    });
-    const ordered = clientesConNombre.sort((a,b) => {
-        const zonaA = String(a.seccion || 'Sin zona');
-        const zonaB = String(b.seccion || 'Sin zona');
-        const grupoA = zonasEnOrdenDeLlegada.indexOf(zonaA);
-        const grupoB = zonasEnOrdenDeLlegada.indexOf(zonaB);
-        if (grupoA !== grupoB) return grupoA - grupoB;
+    // En Control de entrega se respeta únicamente el orden global de creación.
+    // La ventana de pedidos conserva su comportamiento independiente: el nuevo cliente aparece arriba.
+    const ordered = [...appData.clientes].filter(c=>c.nombre).sort((a,b) => {
         return (Number(a.ordenLlegada) || 0) - (Number(b.ordenLlegada) || 0);
     });
     ordered.forEach(c => {
