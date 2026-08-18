@@ -735,7 +735,8 @@ window.onload = function() {
     const data = localStorage.getItem('rancho_vFinal_Zonas');
     if (data) {
         appData = JSON.parse(data);
-        const extras = (appData.zonas || []).filter(z => !ZONAS_BASE.includes(z));
+        const zonasAntiguas = ['PIL', 'Sandía'];
+        const extras = (appData.zonas || []).filter(z => !ZONAS_BASE.includes(z) && !zonasAntiguas.includes(z));
         appData.zonas = [...ZONAS_BASE, ...extras.filter((z,i,a)=>a.indexOf(z)===i)].sort((a,b)=>a.localeCompare(b,'es'));
         if (!appData.config.seconds) appData.config.seconds = [1,2].map((_,i)=>({name:appData.config['s'+(i+1)] || `Segundo ${i+1}`, price:appData.config.precio || 15}));
         appData.clientes.forEach((c, i) => {
