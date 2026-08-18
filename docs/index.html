@@ -389,7 +389,7 @@ function agregarCliente() {
         entregado: false, taperEstado: 0, pago: 0, notaTaper: '', tapers: {},
         ordenLlegada: Math.max(0, ...appData.clientes.map(c => Number(c.ordenLlegada) || 0)) + 1, esReciente: appData.inicioDespacho
     };
-    appData.clientes.unshift(nuevo);
+    appData.clientes.push(nuevo);
     renderClientes();
     guardarAuto();
 }
