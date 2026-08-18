@@ -495,13 +495,24 @@ function renderTabla() {
     const ordered = [...appData.clientes].filter(c=>c.nombre).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
     ordered.forEach(c => body.innerHTML += `<tr onclick="irACliente('${c.id}')"><td>${c.seccion}</td><td>${c.nombre}</td><td style="text-align:left;">${clientOrderText(c)}</td><td>${c.pago || clientTotal(c)} Bs</td></tr>`);
 }
+function claveCreacionEntrega(c, fallbackIndex) {
+    // Los clientes antiguos tienen un ID con Date.now(); esto permite reconstruir
+    // su orden real aunque ordenLlegada haya sido creado por una migración anterior.
+    const idTimestamp = Number(String(c.id || '').replace(/^id-/, ''));
+    if (Number.isFinite(idTimestamp) && idTimestamp > 0) return idTimestamp;
+    const creado = Number(c.creadoEn || c.createdAt || c.fechaCreacion || 0);
+    if (Number.isFinite(creado) && creado > 0) return creado;
+    return Number(c.ordenLlegada) || fallbackIndex;
+}
 function renderEntrega() {
     const body = document.getElementById('body-entrega'); body.innerHTML = '';
     // En Control de entrega se respeta únicamente el orden global de creación.
     // La ventana de pedidos conserva su comportamiento independiente: el nuevo cliente aparece arriba.
-    const ordered = [...appData.clientes].filter(c=>c.nombre).sort((a,b) => {
-        return (Number(a.ordenLlegada) || 0) - (Number(b.ordenLlegada) || 0);
-    });
+    const ordered = [...appData.clientes]
+        .filter(c=>c.nombre)
+        .map((c, index) => ({ c, index, key: claveCreacionEntrega(c, index) }))
+        .sort((a,b) => a.key - b.key || a.index - b.index)
+        .map(entry => entry.c);
     ordered.forEach(c => {
         const deuda = clientTotal(c), clase = (c.pago >= deuda && deuda > 0) ? 'fila-pagada' : (c.entregado ? 'fila-entregada' : '');
         body.innerHTML += `<tr class="${clase}"><td>${c.seccion}</td><td onclick="toggleEntrega('${c.id}')" style="cursor:pointer;font-weight:bold;">${c.nombre}<br><small>${c.entregado?'✅ Entregado':'⭕ Pendiente'}</small></td><td class="pedido-clickeable" onclick="abrirDetallePedido('${c.id}')">${clientOrderText(c)}<br><small style="font-weight:400;color:#555;">Tocar para ver detalle</small></td><td onclick="togglePago('${c.id}', ${deuda})" style="cursor:pointer;">${c.pago || deuda} Bs</td></tr>`;
