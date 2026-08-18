@@ -130,8 +130,7 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
             <label>¿Cuántos segundos habrá?</label><select id="conf-cantidad-segundos" onchange="renderConfigSegundos()"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
             <div id="config-segundos"></div>
             <div class="menu-summary"><b>Almuerzo extra</b><p style="font-size:12px; margin:4px 0;">Puedes agregar una opción especial con su propio precio.</p><div class="flex"><input id="conf-extra-nombre" placeholder="Nombre del extra"><input id="conf-extra-precio" type="number" placeholder="Precio Bs"></div></div>
-            <button class="btn btn-sec" style="margin-top:10px; background:#003366;" onclick="mostrarReportes()">📊 Reportes</button>
-            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn btn-sec" style="flex: 1;" onclick="nav('scr-home')">Cancelar</button>
                 <button class="btn btn-main" style="flex: 2;" onclick="iniciarPedidos()">▶️ Siguiente</button>
             </div>
@@ -147,6 +146,23 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
             <button class="btn btn-main" style="margin: 5px 0;" onclick="nav('scr-resumen-tabla')">📋 Ver Resumen General</button>
         </div>
         <div id="lista-clientes"></div>
+    </div>
+
+    <div id="scr-cuadrar" class="screen">
+        <div class="card">
+            <h3 style="text-align:center; color:#8B0000;">CUADRAR DINERO</h3>
+            <div class="resumen-box" style="padding:14px; margin-bottom:12px;">
+                <div>Ventas que debe haber</div><strong id="cuadrar-ventas" class="highlight">0.00 Bs</strong>
+            </div>
+            <label>Cambio recibido</label><input id="cuadrar-cambio" type="number" min="0" step="0.50" placeholder="0.00" oninput="actualizarCuadre()">
+            <label>Gastos</label><input id="cuadrar-gastos" type="number" min="0" step="0.50" placeholder="0.00" oninput="actualizarCuadre()">
+            <label>Motivo del gasto</label><input id="cuadrar-motivo" type="text" placeholder="Ej.: compra de bolsas">
+            <div class="resumen-box" style="padding:14px; margin:14px 0; background:#003366;">
+                <div>Total de dinero que debe haber</div><strong id="cuadrar-total" class="highlight">0.00 Bs</strong>
+            </div>
+            <button class="btn btn-main" onclick="mostrarResumenDinero()">🧾 Ver resumen final del dinero</button>
+            <button class="btn btn-sec" onclick="nav('scr-final')">◀️ Volver al reporte</button>
+        </div>
     </div>
 
     <div id="scr-resumen-tabla" class="screen">
@@ -182,6 +198,14 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
         <p style="text-align:center; font-size:13px; color:#555;">Aquí aparecen las jornadas guardadas en este celular.</p>
         <div id="lista-reportes"></div>
         <button class="btn btn-sec" style="margin-top:20px;" onclick="nav('scr-config')">◀️ Volver a configuración</button>
+    </div>
+
+    <div id="modal-resumen-dinero" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.76); z-index:3600; padding:16px; align-items:center; justify-content:center;">
+        <div style="background:#fff; color:#1a1a1a; width:100%; max-width:440px; border-radius:16px; padding:22px; max-height:88vh; overflow:auto;">
+            <h2 style="margin-top:0; color:#8B0000; text-align:center;">RESUMEN FINAL DEL DINERO</h2>
+            <div id="resumen-dinero-contenido"></div>
+            <button class="btn btn-sec" style="margin-top:16px;" onclick="cerrarResumenDinero()">Cerrar</button>
+        </div>
     </div>
 
     <div id="modal-detalle-pedido">
@@ -228,6 +252,7 @@ td { border: 1px solid #eee; padding: 8px 2px; text-align: center; }
             <button class="btn btn-sec" style="flex: 1; min-width:120px;" onclick="nav('scr-resumen-tabla')">◀️ Corregir</button>
             <button class="btn btn-add" style="flex: 1; min-width:170px; background:#003366;" onclick="mostrarClientesTapers()">🥡 Clientes que deben tápers</button>
             <button class="btn btn-main" style="flex: 1; min-width:150px;" onclick="guardarYSalir()">💾 Guardar y Salir</button>
+            <button class="btn btn-sec" style="flex: 1; min-width:150px; background:#003366;" onclick="abrirCuadre()">💰 Cuadrar dinero</button>
         </div>
     </div>
 
@@ -264,12 +289,12 @@ if (!navigator.onLine) {
 }
 
 // --- ESTADO INICIAL DE LA APP ---
+const ZONAS_BASE = ['Abarrotes','Bananas','Camiones','Choclos','Coca','Final choclos','Final frutas','Fondo','Frente frutas','Frutas','Puente','Sandia'];
 let appData = {
     config: { fecha: '', sopa: '', s1: '', s2: '', s3: '', s4: '', s5: '', seconds: [], extra: null, precio: 15, soloUno: false },
     clientes: [],
-    // Lista inicial de zonas
-    zonas: ["PIL", "Puente", "Choclos", "Sandía", "Frutas", "Bananas", "Camiones", "Coca", "Abarrotes"],
-    inicioDespacho: false 
+    zonas: [...ZONAS_BASE],
+    inicioDespacho: false
 };
 
 // --- NAVEGACIÓN Y PERSISTENCIA ---
@@ -288,6 +313,15 @@ function nav(screenId) {
 
 function guardarAuto() {
     localStorage.setItem('rancho_vFinal_Zonas', JSON.stringify(appData));
+}
+function obtenerNombresGuardados() {
+    try { return JSON.parse(localStorage.getItem('rancho_nombres_guardados') || '[]'); } catch (e) { return []; }
+}
+function guardarNombreSugerido(nombre) {
+    const limpio = String(nombre || '').trim();
+    if (!limpio) return;
+    const nombres = [...new Set([...obtenerNombresGuardados(), limpio])].sort((a,b)=>a.localeCompare(b,'es'));
+    localStorage.setItem('rancho_nombres_guardados', JSON.stringify(nombres.slice(0, 500)));
 }
 
 // --- GESTIÓN DE ZONAS DINÁMICAS ---
@@ -395,12 +429,14 @@ function renderClientes() {
         let opcionesZonas = appData.zonas.map(z => `<option value="${z}" ${c.seccion === z ? 'selected' : ''}>${z}</option>`).join('');
         contenedor.innerHTML += `<div class="card" id="${c.id}">
             <button class="btn-del" onclick="eliminarCliente('${c.id}')">X</button>
-            <div class="flex"><div><select onchange="manejarCambioZona(${index}, this.value)"><option value="">Zona...</option>${opcionesZonas}<option value="NUEVA_ZONA">➕ Añadir nueva zona...</option></select></div><div><input type="text" placeholder="Nombre" value="${c.nombre}" oninput="actualizarDato(${index}, 'nombre', this.value)"></div></div>
+            <div class="flex"><div><select onchange="manejarCambioZona(${index}, this.value)"><option value="">Zona...</option>${opcionesZonas}<option value="NUEVA_ZONA">➕ Añadir nueva zona...</option></select></div><div><input list="nombres-guardados" type="text" placeholder="Nombre" value="${c.nombre}" oninput="actualizarDato(${index}, 'nombre', this.value)"></div></div>
             <div>${rows.map((row,ri)=>renderPedidoRow(c,row,ri)).join('')}</div>
             <button class="btn btn-sec btn-mini" onclick="addOrderRow('${c.id}')">＋ Agregar otro tipo de pedido</button>
             <div class="flex" style="margin-top:10px; align-items:center;"><span style="font-size:12px;">Pago Bs:</span><input type="number" style="width:80px; margin:0;" value="${c.pago}" oninput="actualizarDato(${index}, 'pago', this.value)"></div>
         </div>`;
     });
+    const nombres = [...new Set([...obtenerNombresGuardados(), ...appData.clientes.map(c => String(c.nombre || '').trim()).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,'es'));
+    contenedor.innerHTML += `<datalist id="nombres-guardados">${nombres.map(n=>`<option value="${n}"></option>`).join('')}</datalist>`;
 }
 function syncLegacyOrders(c) {
     c.orders = { complete: [], loose: [] };
@@ -588,7 +624,7 @@ function construirReporteActual() {
     const counts = {}, soups = 0, totalSeconds = 0, totalMoney = appData.clientes.reduce((sum,c) => sum + clientTotal(c), 0);
     let soupCount = 0, secondsCount = 0;
     appData.clientes.forEach(c => clientItems(c).forEach(o => { counts[o.item] = (counts[o.item] || 0) + o.qty; if (o.item !== 'extra') secondsCount += o.qty; if (o.kind === 'complete' && o.item !== 'extra') soupCount += o.qty; }));
-    return { fecha: appData.config.fecha || new Date().toISOString().slice(0,10), sopa: appData.config.sopa || '', seconds: appData.config.seconds || [], extra: appData.config.extra || null, counts, totalSopas: soupCount, totalSeconds: secondsCount, totalDinero: Number(totalMoney.toFixed(2)), clientes: appData.clientes.filter(c => c.nombre).map(c => ({ nombre:c.nombre, seccion:c.seccion, items:clientItems(c), entregado:!!c.entregado, pago:Number(c.pago || 0) })) };
+    return { fecha: appData.config.fecha || new Date().toISOString().slice(0,10), sopa: appData.config.sopa || '', seconds: appData.config.seconds || [], extra: appData.config.extra || null, counts, totalSopas: soupCount, totalSeconds: secondsCount, totalDinero: Number(totalMoney.toFixed(2)), clientes: appData.clientes.filter(c => c.nombre).map(c => ({ nombre:c.nombre, seccion:c.seccion, items:clientItems(c), entregado:!!c.entregado, pago:Number(c.pago || 0), taperEstado:Number(c.taperEstado || 0), notaTaper:String(c.notaTaper || '') })) };
 }
 function mostrarReportes() { nav('scr-reportes'); }
 function renderReportes() {
@@ -601,14 +637,25 @@ function mostrarReporteGuardado(index) {
     if (!r) return;
     const lineas = (r.seconds || []).map((s,i) => `<div class="detalle-pedido-linea"><span>${s.name}</span><span class="detalle-pedido-cantidad">${r.counts?.['s'+(i+1)] || 0}</span></div>`).join('');
     const extra = r.extra ? `<div class="detalle-pedido-linea"><span>${r.extra.name} (extra)</span><span class="detalle-pedido-cantidad">${r.counts?.extra || 0}</span></div>` : '';
+    const pendientes = (r.clientes || []).map((c,ci) => String(c.notaTaper || '').trim() ? `<div class="detalle-pedido-linea" id="taper-historico-${index}-${ci}"><span><b>${c.nombre}</b><br><small>Debe: ${c.notaTaper}</small></span><button class="btn btn-add btn-mini" onclick="quitarTaperHistorico(${index},${ci})">✅ Ya devolvió</button></div>` : '').join('');
+    const taperBlock = `<hr><h3 style="color:#8B0000;">Clientes que deben tápers</h3>${pendientes || '<p>No hay clientes con tápers pendientes.</p>'}`;
     document.getElementById('modal-detalle-titulo').innerText = `Reporte del ${r.fecha}`;
-    document.getElementById('modal-detalle-contenido').innerHTML = `${lineas}${extra}<hr><p><b>Total de sopas:</b> ${r.totalSopas}</p><p><b>Total de segundos:</b> ${r.totalSeconds}</p><p><b>Total dinero:</b> ${Number(r.totalDinero).toFixed(2)} Bs</p>`;
+    document.getElementById('modal-detalle-contenido').innerHTML = `${lineas}${extra}<hr><p><b>Total de sopas:</b> ${r.totalSopas}</p><p><b>Total de segundos:</b> ${r.totalSeconds}</p><p><b>Total dinero:</b> ${Number(r.totalDinero).toFixed(2)} Bs</p>${taperBlock}`;
     document.getElementById('modal-detalle-pedido').style.display = 'flex';
+}
+function quitarTaperHistorico(reportIndex, clientIndex) {
+    const historial = obtenerHistorial();
+    if (!historial[reportIndex]?.clientes?.[clientIndex]) return;
+    historial[reportIndex].clientes[clientIndex].notaTaper = '';
+    historial[reportIndex].clientes[clientIndex].taperEstado = 1;
+    localStorage.setItem('rancho_historial', JSON.stringify(historial));
+    mostrarReporteGuardado(reportIndex);
 }
 
 function actualizarDato(index, campo, valor) {
     if (campo === 'pago') valor = Number(valor);
     appData.clientes[index][campo] = valor;
+    if (campo === 'nombre') guardarNombreSugerido(valor);
     guardarAuto();
 }
 
@@ -625,6 +672,31 @@ function irACliente(id) {
 }
 
 // --- CIERRE FINAL ---
+function abrirCuadre() {
+    document.getElementById('cuadrar-cambio').value = '';
+    document.getElementById('cuadrar-gastos').value = '';
+    document.getElementById('cuadrar-motivo').value = '';
+    actualizarCuadre();
+    nav('scr-cuadrar');
+}
+function actualizarCuadre() {
+    const ventas = appData.clientes.reduce((sum,c) => sum + clientTotal(c), 0);
+    const cambio = Number(document.getElementById('cuadrar-cambio')?.value || 0);
+    const gastos = Number(document.getElementById('cuadrar-gastos')?.value || 0);
+    document.getElementById('cuadrar-ventas').innerText = `${ventas.toFixed(2)} Bs`;
+    document.getElementById('cuadrar-total').innerText = `${(ventas + cambio - gastos).toFixed(2)} Bs`;
+}
+function mostrarResumenDinero() {
+    const ventas = appData.clientes.reduce((sum,c) => sum + clientTotal(c), 0);
+    const cambio = Number(document.getElementById('cuadrar-cambio').value || 0);
+    const gastos = Number(document.getElementById('cuadrar-gastos').value || 0);
+    const motivo = document.getElementById('cuadrar-motivo').value.trim() || 'Sin gastos registrados';
+    const total = ventas + cambio - gastos;
+    document.getElementById('resumen-dinero-contenido').innerHTML = `<div class="reporte-totales" style="align-items:stretch;text-align:left;"><p><b>Total de ventas:</b> ${ventas.toFixed(2)} Bs</p><p><b>Cambio recibido:</b> ${cambio.toFixed(2)} Bs</p><p><b>Gastos:</b> ${gastos.toFixed(2)} Bs</p><p><b>Motivo:</b> ${motivo}</p><hr><p style="font-size:20px;color:#8B0000;"><b>Total que debe haber:</b> ${total.toFixed(2)} Bs</p></div>`;
+    document.getElementById('modal-resumen-dinero').style.display = 'flex';
+}
+function cerrarResumenDinero() { document.getElementById('modal-resumen-dinero').style.display = 'none'; }
+
 function mostrarCierreFinal() {
     const counts = {}, soups = { value: 0 }, totalSeconds = { value: 0 }, totalMoney = { value: 0 }, faltanT = [];
     appData.clientes.forEach(c => {
@@ -663,6 +735,8 @@ window.onload = function() {
     const data = localStorage.getItem('rancho_vFinal_Zonas');
     if (data) {
         appData = JSON.parse(data);
+        const extras = (appData.zonas || []).filter(z => !ZONAS_BASE.includes(z));
+        appData.zonas = [...ZONAS_BASE, ...extras.filter((z,i,a)=>a.indexOf(z)===i)].sort((a,b)=>a.localeCompare(b,'es'));
         if (!appData.config.seconds) appData.config.seconds = [1,2].map((_,i)=>({name:appData.config['s'+(i+1)] || `Segundo ${i+1}`, price:appData.config.precio || 15}));
         appData.clientes.forEach((c, i) => {
             ensureClientOrders(c);
